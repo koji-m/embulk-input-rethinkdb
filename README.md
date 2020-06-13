@@ -1,4 +1,4 @@
-# Rethinkdb input plugin for Embulk
+# RethinkDB input plugin for Embulk
 
 RethinkDB input plugin for Embulk loads records from RethinkDB.
 
