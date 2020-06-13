@@ -1,5 +1,7 @@
 # RethinkDB input plugin for Embulk
 
+[![Gem Version](https://badge.fury.io/rb/embulk-input-rethinkdb.svg)](https://badge.fury.io/rb/embulk-input-rethinkdb)
+
 RethinkDB input plugin for Embulk loads records from RethinkDB.
 
 ## Overview
