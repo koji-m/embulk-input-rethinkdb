@@ -24,7 +24,7 @@ RethinkDB input plugin for Embulk loads records from RethinkDB.
 ReQL specified in query option is described according to the following syntax rules.
 
 - The syntax is JavaScript (ECMAScript 5.1) runs on Nashorn (JavaScript Engine developed in Java).
-- The code must be an expression that evaluates to ReqlAst. (No trailing comma required)
+- The code must be an expression that evaluates to ReqlAst. (No trailing semicolon required)
 - The RethinkDB object can be referenced as the variable `r`.
 
 ## Example
