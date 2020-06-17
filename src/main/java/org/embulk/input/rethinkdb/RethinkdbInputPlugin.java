@@ -25,6 +25,8 @@ import org.embulk.spi.Schema;
 import org.embulk.spi.type.Types;
 import org.msgpack.value.Value;
 import org.msgpack.value.ValueFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
@@ -80,6 +82,8 @@ public class RethinkdbInputPlugin
         @ConfigInject
         BufferAllocator getBufferAllocator();
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(RethinkdbInputPlugin.class);
 
     @Override
     public ConfigDiff transaction(ConfigSource config,
