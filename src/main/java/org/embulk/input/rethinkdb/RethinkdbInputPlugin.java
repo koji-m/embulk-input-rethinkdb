@@ -33,6 +33,11 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -93,9 +98,7 @@ public class RethinkdbInputPlugin
         if (task.getAuthKey().isPresent()) {
             throw new ConfigException("auth_key option is not supported yet");
         }
-        if (task.getCertFile().isPresent()) {
-            throw new ConfigException("cert_file option is not supported yet");
-        }
+
         if (!(task.getUser().isPresent() && task.getPassword().isPresent())) {
             throw new ConfigException("user and password are needed");
         }
@@ -144,12 +147,25 @@ public class RethinkdbInputPlugin
             throw new ConfigException("ReQL compile error");
         }
 
-        Connection conn = r.connection()
+        Connection.Builder builder = r.connection()
                 .hostname(task.getHost())
                 .port(task.getPort())
                 .db(task.getDatabase())
-                .user(task.getUser().get(), task.getPassword().get())
-                .connect();
+                .user(task.getUser().get(), task.getPassword().get());
+
+        Connection conn;
+        if (task.getCertFile().isPresent()) {
+            Path certFilePath = Paths.get(task.getCertFile().get());
+            try (InputStream is = Files.newInputStream(certFilePath)) {
+                builder.certFile(is);
+                conn = builder.connect();
+            } catch (IOException ex) {
+                throw new ConfigException("error reading TLS certificate file");
+            }
+        }
+        else {
+            conn = builder.connect();
+        }
 
         Cursor cursor = ast.run(conn);
         for (Object doc : cursor) {
