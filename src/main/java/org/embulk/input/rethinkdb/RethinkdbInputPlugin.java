@@ -80,9 +80,16 @@ public class RethinkdbInputPlugin
         @ConfigDefault("null")
         Optional<String> getQuery();
 
+        @Config("table")
+        @ConfigDefault("null")
+        Optional<String> getTable();
+
         @Config("column_name")
         @ConfigDefault("\"record\"")
         String getColumnName();
+
+        String getReql();
+        void setReql(String ast);
 
         @ConfigInject
         BufferAllocator getBufferAllocator();
@@ -102,9 +109,21 @@ public class RethinkdbInputPlugin
         if (!(task.getUser().isPresent() && task.getPassword().isPresent())) {
             throw new ConfigException("user and password are needed");
         }
-        if (!task.getQuery().isPresent()) {
-            throw new ConfigException("query is needed");
+
+        String reql;
+        if (task.getQuery().isPresent()) {
+            if (task.getTable().isPresent()) {
+                throw new ConfigException("only one of 'table' or 'query' parameter is needed");
+            }
+            reql = String.format("var ast = %s; var res = {ast: ast}; res;", task.getQuery().get());
         }
+        else {
+            if (!task.getTable().isPresent()) {
+                throw new ConfigException("'table' or 'query' parameter is needed");
+            }
+            reql = String.format("var ast = r.table('%s'); var res = {ast: ast}; res;", task.getTable().get());
+        }
+        task.setReql(reql);
 
         Schema schema = Schema.builder().add(task.getColumnName(), Types.JSON).build();
         int taskCount = 1;
@@ -141,12 +160,11 @@ public class RethinkdbInputPlugin
         RethinkDB r = RethinkDB.r;
         ReqlAst ast;
         try {
-            ast = compileReQL(r, task.getQuery().get());
+            ast = compileReQL(r, task.getReql());
         }
         catch (final ScriptException se) {
             throw new ConfigException("ReQL compile error");
         }
-
         Connection.Builder builder = r.connection()
                 .hostname(task.getHost())
                 .port(task.getPort())
@@ -185,14 +203,13 @@ public class RethinkdbInputPlugin
         return Exec.newConfigDiff();
     }
 
-    private ReqlAst compileReQL(RethinkDB r, String query) throws ScriptException
+    private ReqlAst compileReQL(RethinkDB r, String reql) throws ScriptException
     {
         ScriptEngineManager factory = new ScriptEngineManager();
         ScriptEngine engine = factory.getEngineByName("nashorn");
 
         engine.put("r", r);
 
-        String reql = String.format("var ast = %s; var res = {ast: ast}; res;", query);
         Bindings bindings = (Bindings) engine.eval(reql);
 
         return (ReqlAst) bindings.get("ast");
