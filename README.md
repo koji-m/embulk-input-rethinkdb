@@ -19,7 +19,10 @@ RethinkDB input plugin for Embulk loads records from RethinkDB.
 - **user**: database login user name (string, required)
 - **password**: database login password (string, required)
 - **cert_file**: path to TLS CA certificate file (string)
-- **query**: ReQL to run (string, required)
+- Select whether to write a query or specify only the table
+    - **query**: ReQL to run (string)
+    <br>or<br>
+    - **table**: table from which load data from (string)
 - **column_name**: column name used in outputs (string, default: `"record"`)
 
 ## ReQL for query option
